@@ -1,0 +1,8 @@
+parameters:
+    main:
+        # Common hyperparameters
+        env: 'traffic'
+        simulator: 'global'
+        name: 'global_traffic'
+        influence_model: None
+        num_workers: 8
