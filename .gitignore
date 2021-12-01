@@ -1,0 +1,6 @@
+__pycache__
+influence/data
+influence/models
+scripts
+recurrent_policies
+saved_policies
