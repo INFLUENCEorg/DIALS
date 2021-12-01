@@ -1,6 +1,7 @@
 from warehouse.envs.global_warehouse import GlobalWarehouse
 from warehouse.envs.utils import *
 import numpy as np
+from gym import spaces
 sys.path.append("..")
 
 class LocalWarehouse(GlobalWarehouse):
@@ -24,7 +25,7 @@ class LocalWarehouse(GlobalWarehouse):
         self.robot_domain_size = self.parameters['robot_domain_size']
         self.prob_item_appears = self.parameters['prob_item_appears']
         # The learning robot
-        self.learning_robot_id = self.parameters['learning_robot_id']
+        self.learning_robot_ids = [0]
         self.max_episode_length = self.parameters['n_steps_episode']
         self.obs_type = self.parameters['obs_type']
         self.items = []
@@ -44,7 +45,7 @@ class LocalWarehouse(GlobalWarehouse):
         obs = self._get_observation()
         self.episode_length = 0
         self.influence.reset()
-        return obs
+        return np.array([obs])
 
     def step(self, action):
         """
@@ -53,19 +54,20 @@ class LocalWarehouse(GlobalWarehouse):
         self.probs = self.influence.predict(self.get_dset)
         self._increase_item_waiting_time()
         self._robots_act([action])
-        # ext_robot_locs = self._sample_ext_robot_locs(self.probs)
         reward = self._compute_reward()
         self._remove_items(self.probs)
         self._add_items()
         obs = self._get_observation()
         self.episode_length += 1
         done = (self.max_episode_length <= self.episode_length)
-        # if self.parameters['render']:
-        #     self.render(self.parameters['render_delay'])
-        # Influence-augmented observations
         if self.influence.aug_obs:
             obs = np.append(obs, self.influence.get_hidden_state())
-        return obs, reward, done, {}
+        return np.array([obs]), [reward], [done], {}
+    
+    @property
+    def observation_space(self):
+        return spaces.Box(low=0, high=1, shape=(self.OBS_SIZE,))
+
         
     ######################### Private Functions ###########################
 

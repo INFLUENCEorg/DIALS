@@ -1,4 +1,2 @@
 from warehouse.envs.global_warehouse import GlobalWarehouse
 from warehouse.envs.local_warehouse import LocalWarehouse
-from warehouse.envs.mini_warehouse import MiniWarehouse
-from warehouse.envs.local_mini_warehouse import LocalMiniWarehouse

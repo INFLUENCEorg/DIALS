@@ -22,7 +22,7 @@ class GlobalWarehouse(gym.Env):
                3: 'RIGHT'}
     OBS_SIZE = 37 # 7x7 grid + 20 items // 5x5 grid + 12 items
 
-    def __init__(self, seed):
+    def __init__(self, seed, learning_agent_ids):
         parameters = read_parameters('warehouse.yaml')
         self.n_columns = parameters['n_columns']
         self.n_rows = parameters['n_rows']
@@ -31,15 +31,13 @@ class GlobalWarehouse(gym.Env):
         self.distance_between_shelves = parameters['distance_between_shelves']
         self.robot_domain_size = parameters['robot_domain_size']
         self.prob_item_appears = parameters['prob_item_appears']
-        # The learning robot
-        self.learning_robot_id = parameters['learning_robot_id']
+        self.learning_robot_ids = learning_agent_ids
         self.max_episode_length = parameters['n_steps_episode']
         self.obs_type = parameters['obs_type']
         self.items = []
         self.img = None
         self.parameters = parameters
         self.seed(seed)
-        # self.influence = influence
         self.i = 0
 
     ############################## Override ###############################
@@ -50,13 +48,10 @@ class GlobalWarehouse(gym.Env):
         """
         self.robot_id = 0
         self._place_robots()
-        # self.influence.predict(dset)
         self.item_id = 0
         self.items = []
-        # self.prob_item_appears = np.random.choice(self.item_probs)
         self._add_items()
         obs = self._get_observation()
-        # self.prev_obs = obs
         self.episode_length = 0
         return obs
 
@@ -72,23 +67,21 @@ class GlobalWarehouse(gym.Env):
             state = self._get_state()
             obs = robot.observe(state, self.obs_type)
             actions.append(robot.select_naive_action2(obs, self.items))
-        actions[self.learning_robot_id] = action
+        for i, robot_id in enumerate(self.learning_robot_ids):
+            actions[robot_id] = action[i]
         self._robots_act(actions)
         infs = self.get_infs
         reward = self._compute_reward()
         self._remove_items()
         self._add_items()
         obs = self._get_observation()
-        # self.prev_obs = obs
         self.episode_length += 1
-        done = (self.max_episode_length <= self.episode_length)
-        # if self.parameters['render']:
-            # self.render(self.parameters['render_delay'])
+        done = [(self.max_episode_length <= self.episode_length)]*len(self.learning_robot_ids)
         return obs, reward, done, {'dset': dset, 'infs': infs}
 
     @property
     def observation_space(self):
-        return spaces.Box(low=0, high=1, shape=(self.OBS_SIZE,))
+        return spaces.Box(low=0, high=1, shape=(len(self.learning_robot_ids), self.OBS_SIZE))
 
     @property
     def action_space(self):
@@ -105,11 +98,6 @@ class GlobalWarehouse(gym.Env):
         bitmap = self._get_state()
         position = self.robots[self.learning_robot_id].get_position
         bitmap[position[0], position[1], 1] += 1
-        # bitmap[:, :, 1] = bitmap[:, :, 1] -  0.1
-        # for robot_id, robot in enumerate(self.robots):
-        #     if robot.is_slow:
-        #         position = robot.get_position
-        #         bitmap[position[0], position[1], 1] += 2
         im = bitmap[:, :, 0] - 2*bitmap[:, :, 1]
 
         if self.img is None:
@@ -137,12 +125,10 @@ class GlobalWarehouse(gym.Env):
 
         else:
             self.img.set_data(im)
-        # plt.pause(delay)
         plt.savefig('images/image.jpg')
         img = plt.imread('images/image.jpg')
         return img
-        # plt.savefig('../video/' + str(self.i))
-        # self.i += 1
+
 
     def seed(self, seed=None):
         if seed is not None:
@@ -150,39 +136,40 @@ class GlobalWarehouse(gym.Env):
 
     @property
     def get_dset(self):
+        dset_list = []
         state = self._get_state()
-        robot = self.robots[self.learning_robot_id]
-        obs = robot.observe(state, 'vector')
-        # dset = obs[49:]
-        dset = obs
-        return dset
+        for robot_id in self.learning_robot_ids:
+            robot = self.robots[robot_id]
+            obs = robot.observe(state, 'vector')
+            dset = obs
+            dset_list.append(dset)
+        return np.array(dset_list)
     
-    def get_robot_loc_bitmap(self, robot_id):
+    @property
+    def get_infs(self):
+        infs_list = []
+        for robot_id in self.learning_robot_ids:
+            robot_neighbors = self._get_robot_neighbors(robot_id)
+            infs = np.array([]).astype(np.int)
+            for idx, neighbor_id in enumerate(robot_neighbors):
+                loc_bitmap = self._get_robot_loc_bitmap(neighbor_id)
+                loc_bitmap = np.reshape(loc_bitmap, (self.robot_domain_size[0], self.robot_domain_size[1]))
+                intersection = np.array(self._get_intersection(idx, loc_bitmap))
+                source = np.zeros(self.robot_domain_size[0]-1).astype(np.int)
+                if all(intersection == np.zeros(len(intersection))):
+                    source[-1] = 1
+                else:
+                    source[np.where(intersection == 1)] = 1
+                infs = np.append(infs, source)
+            infs_list.append(infs)
+        return np.array(infs_list)
+
+    def _get_robot_loc_bitmap(self, robot_id):
         state = self._get_state()
         obs = self.robots[robot_id].observe(state, 'vector')
         loc_bitmap = obs[:self.robot_domain_size[0]*self.robot_domain_size[1]]
         return loc_bitmap
-    
-    @property
-    def get_infs(self):
-        # prev_items = prev_obs[25:]
-        # items = obs[25:]
-        # bitmap = np.reshape(obs[:25], (5,5))
-        # infs =  np.array(prev_items) - np.array(items) - np.concatenate((bitmap[[0,-1], 1:-1].flatten(),bitmap[1:-1, [0,-1]].flatten()))
-        # infs = np.maximum(np.zeros_like(infs), infs)
-        robot_neighbors = self._get_robot_neighbors(self.learning_robot_id)
-        infs = np.array([]).astype(np.int)
-        for idx, neighbor_id in enumerate(robot_neighbors):
-            loc_bitmap = self.get_robot_loc_bitmap(neighbor_id)
-            loc_bitmap = np.reshape(loc_bitmap, (self.robot_domain_size[0], self.robot_domain_size[1]))
-            intersection = np.array(self._get_intersection(idx, loc_bitmap))
-            source = np.zeros(self.robot_domain_size[0]-1).astype(np.int)
-            if all(intersection == np.zeros(len(intersection))):
-                source[-1] = 1
-            else:
-                source[np.where(intersection == 1)] = 1
-            infs = np.append(infs, source)
-        return infs
+
 
     def _get_intersection(self, neighbor_id, bitmap):
         intersections = {0: bitmap[1:-1, 0], 1: bitmap[0, 1:-1], 2: bitmap[1:-1, self.robot_domain_size[1]-1], 3: bitmap[self.robot_domain_size[0]-1, 1:-1]}
@@ -217,12 +204,8 @@ class GlobalWarehouse(gym.Env):
                                 domain_rows[i+1], domain_columns[j+1]]
                 robot_position = [robot_domain[0] + self.robot_domain_size[0]//2,
                                   robot_domain[1] + self.robot_domain_size[1]//2]
-                if self.robot_id == self.learning_robot_id:
-                    is_slow = False
-                else:
-                    is_slow = np.random.choice([True, False])
                 self.robots.append(Robot(self.robot_id, robot_position,
-                                         robot_domain, is_slow))
+                                         robot_domain))
                 self.robot_id += 1
 
     def _add_items(self):
@@ -285,13 +268,15 @@ class GlobalWarehouse(gym.Env):
         state and the robot's designated domain.
         """
         state = self._get_state()
-        observation = self.robots[self.learning_robot_id].observe(state, 'vector')
-        # print(observation)
-        # observation = state[:, :, 0] - 2*state[:, :, 1]
-        # shape = np.shape(observation)
-        # observation = np.reshape(observation, (shape[0]*shape[1]))
-        return observation
-
+        obs_list = []
+        for robot_id in self.learning_robot_ids:
+            observation = self.robots[robot_id].observe(state, 'vector')
+            obs_list.append([observation])
+        if len(self.learning_robot_ids) > 1:
+            return np.array(obs_list)
+        else:
+            return observation
+        
     def _get_robot_neighbors(self, robot_id):
         """
         Gets robot's neighbors
@@ -311,37 +296,21 @@ class GlobalWarehouse(gym.Env):
         """
         Computes reward for the learning robot.
         """
-        # GIVES REWARD OF +1 EVERY TIME AN ITEM IN THE LEARNING AGENT'S REGION IS PICKED UP BY ANY AGENT.
-        # reward = 0
-        # learn_robot_domain = self.robots[self.learning_robot_id].get_domain
-        # robot_ids = self._get_robot_neighbors(self.learning_robot_id)
-        # robot_ids.append(self.learning_robot_id)
-        # for item in self.items:
-        #     item_pos = item.get_position
-        #     if learn_robot_domain[0] <= item_pos[0] <= learn_robot_domain[2] and \
-        #        learn_robot_domain[1] <= item_pos[1] <= learn_robot_domain[3]:
-        #         for robot_id in robot_ids:
-        #             robot_pos = self.robots[robot_id].get_position
-        #             # reward += -0.1 #*item.get_waiting_time
-        #             if robot_pos[0] == item_pos[0] and robot_pos[1] == item_pos[1]:
-        #                 reward += 1
-        #                 break # maximum one reward per item
-        # GIVES REWARD OF +1 ONLY IF THE LEARNING AGENT PICKS UP AN ITEM.
-        reward = 0
-        robot = self.robots[self.learning_robot_id]
-        items = self._get_robot_items(robot)
-        item_waiting_times = [item.get_waiting_time for item in items]
-        robot_pos = robot.get_position
-        # robot_domain = robot.get_domain
-        for index, item in enumerate(items):
-            item_pos = item.get_position
-            # if robot_domain[0] <= item_pos[0] <= robot_domain[2] and \
-            #    robot_domain[1] <= item_pos[1] <= robot_domain[3]:
-            #     reward += -0.1 #*item.get_waiting_time
-            if robot_pos[0] == item_pos[0] and robot_pos[1] == item_pos[1]:
-                reward = item_waiting_times[index]/max(item_waiting_times)
-                # reward = 1
-        return reward
+        reward_list = []
+        for robot_id in self.learning_robot_ids:
+            reward = 0
+            robot = self.robots[robot_id]
+            items = self._get_robot_items(robot)
+            item_waiting_times = [item.get_waiting_time for item in items]
+            robot_pos = robot.get_position
+            for index, item in enumerate(items):
+                item_pos = item.get_position
+                if robot_pos[0] == item_pos[0] and robot_pos[1] == item_pos[1]:
+                    reward = item_waiting_times[index]/max(item_waiting_times)
+            reward_list.append(reward)
+        
+        return np.array(reward_list)
+        
 
     def _get_robot_items(self, robot):
         domain = robot.get_domain

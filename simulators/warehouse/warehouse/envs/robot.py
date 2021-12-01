@@ -12,13 +12,12 @@ class Robot():
                'LEFT': 2,
                'RIGHT': 3}
 
-    def __init__(self, robot_id, robot_position, robot_domain, is_slow):
+    def __init__(self, robot_id, robot_position, robot_domain):
         """
         @param pos tuple (x,y) with initial robot position.
         Initializes the robot
         """
         self._id = robot_id
-        self.is_slow = is_slow
         self.slow_probs = [1.0, 0.0]
         self._pos = robot_position
         self._robot_domain = robot_domain
@@ -74,22 +73,20 @@ class Robot():
         """
         Take an action
         """
-        if not self.is_slow or np.random.choice([True, False], p=self.slow_probs):
-    
-            new_pos = self._pos
-            if action == 0:
-                if self._pos[1] not in [self._robot_domain[1], self._robot_domain[3]]:
-                    new_pos = [self._pos[0] - 1, self._pos[1]]
-            elif action == 1:
-                if self._pos[1] not in [self._robot_domain[1], self._robot_domain[3]]:
-                    new_pos = [self._pos[0] + 1, self._pos[1]]
-            elif action == 2:
-                if self._pos[0] not in [self._robot_domain[0], self._robot_domain[2]]:
-                    new_pos = [self._pos[0], self._pos[1] - 1]
-            elif action == 3:
-                if self._pos[0] not in [self._robot_domain[0], self._robot_domain[2]]:
-                    new_pos = [self._pos[0], self._pos[1] + 1]
-            self.set_position(new_pos)
+        new_pos = self._pos
+        if action == 0:
+            if self._pos[1] not in [self._robot_domain[1], self._robot_domain[3]]:
+                new_pos = [self._pos[0] - 1, self._pos[1]]
+        elif action == 1:
+            if self._pos[1] not in [self._robot_domain[1], self._robot_domain[3]]:
+                new_pos = [self._pos[0] + 1, self._pos[1]]
+        elif action == 2:
+            if self._pos[0] not in [self._robot_domain[0], self._robot_domain[2]]:
+                new_pos = [self._pos[0], self._pos[1] - 1]
+        elif action == 3:
+            if self._pos[0] not in [self._robot_domain[0], self._robot_domain[2]]:
+                new_pos = [self._pos[0], self._pos[1] + 1]
+        self.set_position(new_pos)
             
 
     def set_position(self, new_pos):
