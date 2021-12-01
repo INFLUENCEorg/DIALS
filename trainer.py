@@ -118,18 +118,23 @@ class DistributedTrainer(object):
         # for local_trainer in self.local_trainers:
         #     local_trainer.child.send(('train_influence', None))
         # pool = Pool()#processes=len(self.agents))
-        # for i in range(len(self.agents)):
-        #     pool.apply_async(self.envs[i].influence.learn, ())
-        # pool.close()
-        # pool.join()
-        processes = []
-        for env in self.envs:
-            p = Process(target=env.influence.learn)
-            p.start()
-            processes.append(p)
+        with Pool() as pool:
+            for env in self.envs:
+                pool.apply_async(env.influence.learn, ())
+            pool.close()
+            pool.join()
+        # processes = []
+        # for env in self.envs:
+        #     p = Process(target=env.influence.learn)
+        #     p.start()
+        #     processes.append(p)
 
-        for p in processes:
-            p.join()
+        # for p in processes:
+        #     p.join()
+        # with Pool() as pool:
+        #     for env in self.envs:
+        #         pool.apply_async(env.influence.learn, ())
+        # return self.agents
 
     def close(self):
 
