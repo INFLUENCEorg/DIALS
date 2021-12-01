@@ -4,7 +4,7 @@ import multiprocessing as mp
 import multiprocessing.connection
 from torch.multiprocessing import Pool, Process, set_start_method
 
-def train_single_agent(agent, env, training_steps=1.0e+4):
+def train_single_agent(agent, env, training_steps=1.0e+5):
   
     obs = env.reset()
     step = 0
