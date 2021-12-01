@@ -25,6 +25,7 @@ parameters:
         learning_agent_ids: [7, 9, 14, 16, 19, 21, 26, 29]
         hidden_size: 256
         hidden_size_2: 128
+        influence_train_freq: 5.0e+5
 
     influence:
         # Common hyperparameters
