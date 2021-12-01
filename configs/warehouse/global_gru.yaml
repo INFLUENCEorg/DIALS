@@ -1,13 +1,12 @@
 parameters:
     main:
-        # Common hyperparameters
+         # Common hyperparameters
         simulator: 'global'
         env: 'warehouse'
-        obs_size: 8
+        obs_size: 37
         rollout_steps: 8
         num_actions: 4
-        name: 'global_warehouse_recurrent'
-        influence_model: None
+        name: 'warehouse'
         fully_connected: true
         num_fc_layers: 1
         num_fc_units: [512]
@@ -22,6 +21,6 @@ parameters:
         beta: 0.01
         render: False
         policy: 'GRUPolicy'
-        load_policy: False
-        total_steps: 1.0e+5
-        eval_freq: 1.0e+4
+        learning_agent_ids: [7, 9, 14, 16, 19, 21, 26, 29]
+        hidden_size: 256
+        hidden_size_2: 128
