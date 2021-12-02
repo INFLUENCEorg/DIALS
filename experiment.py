@@ -16,7 +16,7 @@ import csv
 import os
 import time
 from copy import deepcopy
-from trainer import DistributedTrainer, GlobalTrainer
+from trainer import DistributedTraining, GlobalTraining
 # from sacred.settings import SETTINGS
 # SETTINGS.CAPTURE_MODE = 'sys'
 
@@ -151,11 +151,11 @@ class Experiment(object):
 
                 local_simulators.append(gym.make(local_sim_name, influence=influence, seed=seed+i))
             
-            self.trainer = DistributedTrainer(self.agents, local_simulators)
+            self.trainer = DistributedTraining(self.agents, local_simulators)
 
         else:
             
-            self.trainer = GlobalTrainer(self.agents, self.global_simulator)
+            self.trainer = GlobalTraining(self.agents, self.global_simulator)
            
     def run(self):
 

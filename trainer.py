@@ -79,7 +79,7 @@ def train_multi_agent(agents, env, training_steps=1.0e+3):
     return agents
 
 
-class DistributedTrainer(object):
+class DistributedTraining(object):
     
     def __init__(self, agents, envs):
         # self.local_trainers = [LocalTrainer(agent, env) for agent, env, in zip(agents, envs)]
@@ -142,7 +142,7 @@ class DistributedTrainer(object):
             env.close()
     
 
-class GlobalTrainer(object):
+class GlobalTraining(object):
 
     def __init__(self, agents, env):
 
@@ -151,8 +151,9 @@ class GlobalTrainer(object):
     
     def train(self, training_steps):
 
-        agents = train_multi_agent(self.agents, self.env, training_steps)
-        return agents
+        self.agents = train_multi_agent(self.agents, self.env, training_steps)
+        
+        return self.agents
 
     def close(self):
 
