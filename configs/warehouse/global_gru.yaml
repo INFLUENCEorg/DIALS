@@ -21,7 +21,6 @@ parameters:
         beta: 0.01
         render: False
         policy: 'GRUPolicy'
-        # learning_agent_ids: [7, 9, 14, 16, 19, 21, 26, 29]
-        learning_agent_ids: [20]
+        learning_agent_ids: [7, 9, 14, 16, 19, 21, 26, 29]
         hidden_size: 256
         hidden_size_2: 128
