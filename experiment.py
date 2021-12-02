@@ -162,7 +162,7 @@ class Experiment(object):
         total_steps = int(self.parameters['total_steps'])
         eval_freq = int(self.parameters['eval_freq'])
 
-        for step in range(0, total_steps, eval_freq):
+        for step in range(0, total_steps+1, eval_freq):
 
             if self.parameters['simulator'] == 'local':
                 if step % self.parameters['influence_train_freq'] == 0:
