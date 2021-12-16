@@ -5,7 +5,7 @@ from influence.influence_network import InfluenceNetwork
 from influence.influence_uniform import InfluenceUniform
 # from simulators.vec_env import VecEnv
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize, VecFrameStack, DummyVecEnv
-from recurrent_policies.PPO import Agent, FNNPolicy, GRUPolicy, ModifiedGRUPolicy, IAMGRUPolicy, FNNFSPolicy, LSTMPolicy, IAMLSTMPolicy
+from recurrent_policies.PPO import Agent, FNNPolicy, GRUPolicy, ModifiedGRUPolicy, IAMGRUPolicy, FNNFSPolicy, LSTMPolicy, IAMLSTMPolicy, agent
 import gym
 import sacred
 from sacred.observers import MongoObserver
@@ -105,7 +105,6 @@ class Experiment(object):
         
         self.agents = []
         for _ in self.parameters['learning_agent_ids']:
-
             self.agents.append(
                 Agent(
                     policy=policy,
@@ -131,8 +130,8 @@ class Experiment(object):
             
             self.data_path = parameters['influence']['data_path'] + str(_run._id) + '/'
             self.dataset_size = parameters['influence']['dataset_size']
-            
-            local_simulators = []
+
+            self.local_simulators = []
 
             for i, agent_id in enumerate(self.parameters['learning_agent_ids']):
 
@@ -149,9 +148,9 @@ class Experiment(object):
                 else:
                     influence = InfluenceUniform(parameters['influence'])
 
-                local_simulators.append(gym.make(local_sim_name, influence=influence, seed=seed+i))
+                self.local_simulators.append(gym.make(local_sim_name, influence=influence, seed=seed+i, agent_id=agent_id))
             
-            self.trainer = DistributedTraining(self.agents, local_simulators)
+            self.trainer = DistributedTraining(self.agents, self.local_simulators)
 
         else:
             
@@ -167,14 +166,13 @@ class Experiment(object):
             if self.parameters['simulator'] == 'local':
                 if step % self.parameters['influence_train_freq'] == 0:
                     self.collect_data(self.dataset_size, self.data_path)
-                    self.trainer.train_influence()
-
+                    self.local_simulators = self.trainer.train_influence()
             start = time.time()
             self.evaluate(step)
             end = time.time()
             print('Evaluate time:', end-start)
             start = time.time()
-            self.agents = self.trainer.train(eval_freq)
+            self.agents = self.trainer.train(self.parameters['eval_freq'])
             
             end = time.time()
             print('Train time:', end-start)
@@ -188,9 +186,9 @@ class Experiment(object):
         # copy agent to not alter hidden memory
         agents = deepcopy(self.agents)
         num_learning_agents = len(self.parameters['learning_agent_ids'])
+        obs = self.global_simulator.reset(restart=True)
         while n_steps < dataset_size:
             done = [False]*num_learning_agents
-            obs = self.global_simulator.reset()
             dset = []
             infs = []
             # NOTE: Episodes in all envs must terminate at the same time 
@@ -206,6 +204,7 @@ class Experiment(object):
                 dset.append(info['dset'])
                 infs.append(info['infs'])
             log(dset, infs, data_path, self.parameters['learning_agent_ids'])
+            obs = self.global_simulator.reset()
         print('Done!')
 
     def evaluate(self, step, collect_data=False):
@@ -216,10 +215,10 @@ class Experiment(object):
         agents = deepcopy(self.agents)
         num_learning_agents = len(self.parameters['learning_agent_ids'])
         print('Evaluating policy on global simulator...')
+        obs = self.global_simulator.reset(restart=True)
         while n_steps < self.parameters['eval_steps']:
             reward_sum = np.array([0.0]*num_learning_agents)
             done = [False]*num_learning_agents
-            obs = self.global_simulator.reset()
             # NOTE: Episodes in all envs must terminate at the same time
             for agent in agents:
                 agent.reset_hidden_memory([True])
@@ -231,7 +230,7 @@ class Experiment(object):
                     actions.append(action)
                 obs, reward, done, info = self.global_simulator.step(actions)
                 reward_sum += np.array(reward)
-        
+            obs = self.global_simulator.reset()
             episode_rewards.append(reward_sum)
         self._run.log_scalar('mean episodic return', np.mean(episode_rewards), step)
         print(np.mean(episode_rewards))

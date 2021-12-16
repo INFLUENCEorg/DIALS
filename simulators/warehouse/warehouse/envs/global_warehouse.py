@@ -42,7 +42,7 @@ class GlobalWarehouse(gym.Env):
 
     ############################## Override ###############################
 
-    def reset(self):
+    def reset(self, restart=False):
         """
         Resets the environment's state
         """

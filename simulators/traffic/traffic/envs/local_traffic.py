@@ -51,7 +51,7 @@ class LocalTraffic(TrafficLightGridBitmapEnv):
     OBS_SIZE = 40
     """
     """
-    def __init__(self, influence, seed):
+    def __init__(self, influence, seed, agent_id):
         additional_net_params = {'grid_array': grid_array,
                                  'speed_limit': speed_limit,
                                  'horizontal_lanes': horizontal_lanes, 
@@ -72,15 +72,18 @@ class LocalTraffic(TrafficLightGridBitmapEnv):
         #                                                row_num=N_ROWS,
         #                                                additional_net_params=additional_net_params)
         initial_config = InitialConfig(spacing='custom', lanes_distribution=float('inf'), shuffle=True)                                                       
-        network = TrafficLightGridNetwork(name='grid', vehicles=vehicles, net_params=net_params, initial_config=initial_config)
+        network = TrafficLightGridNetwork(name='grid_' + str(agent_id), vehicles=vehicles, net_params=net_params, initial_config=initial_config)
         
         env_params = EnvParams(horizon=horizon, additional_params=additional_env_params)
         sim_params = SumoParams(render=False, restart_instance=False, sim_step=1, print_warnings=False, seed=seed)
-        super().__init__(env_params, sim_params, network, simulator='traci')
+        super().__init__(env_params, sim_params, network)
         self.influence = influence
+        self.agent_id = agent_id
 
     # override
-    def reset(self):
+    def reset(self, restart=False):
+        if restart:
+            self.restart_simulation(self.sim_params)
         self.influence.reset()
         # probs = self.influence.predict(np.zeros(40))
         node = self.tl_controlled[0]
@@ -88,32 +91,14 @@ class LocalTraffic(TrafficLightGridBitmapEnv):
         self.veh_id = 0
         # remove pending vehicles that couldn't be added in the previous episode
         self.k.vehicle.kernel_api.simulation.clearPending()
-        # add new vehicles
-        # for i, edge in enumerate(node_edges):
-        #     sample = np.random.uniform(0,1)
-        #     if sample < probs[i]:
-        #         # try:
-        #         speed = 9.5
-        #         self.k.vehicle.add(veh_id='idm_' + str(self.veh_id), type_id='idm', 
-        #                            edge=edge, lane='free', pos=6, speed=9.5)
-        #         # except:          
-        #             # self.k.vehicle.remove('idm_' + str(self.veh_id))
-        #             # self.k.vehicle.add(veh_id='idm_' + str(self.veh_id), type_id='idm', 
-        #                             #    edge=edge, lane='free', pos=6, speed=10)
-        #         self.veh_id += 1
-        state = super().reset()
+        state = super().reset()[0]
         observation = []
-        infs = []
         for edge in range(len(node_edges)):
             observation.append(state[edge][:-1])
         observation.append(state[-1]) #  append traffic light info
         observation = np.concatenate(observation)
         self.dset = observation
-        if self.influence.aug_obs:
-            observation = np.append(observation, self.influence.get_hidden_state())
-        reward = 0
-        done = False
-        return observation
+        return np.array([observation])
 
     # override
     def step(self, rl_actions):
@@ -127,33 +112,24 @@ class LocalTraffic(TrafficLightGridBitmapEnv):
                 speed = 9.5
                 if len(self.k.vehicle.get_ids_by_edge(edge)) > 8:
                     speed = 3
-                # while len(self.k.vehicle.kernel_api.vehicle.getIDList()) == total_vehicles or speed == 0:
-                    # self.k.vehicle.kernel_api.simulation.clearPending()
-                    # self.k.vehicle.add(veh_id='idm_' + str(self.veh_id), type_id='idm', 
-                                #    edge=edge, lane='allowed', pos=6, speed=speed)
-                    # print(len)
-                    # speed -= 1
                 self.k.vehicle.add(veh_id='idm_' + str(self.veh_id), type_id='idm',
                                    edge=edge, lane='allowed', pos=6, speed=speed)
                 self.veh_id += 1
-        state, reward, done, _ = super().step(rl_actions)
+        rl_actions = rl_actions.item()
+        states, reward, done, _ = super().step(rl_actions)
+        state = states[0]
         # self.k.vehicle.kernel_api.simulation.clearPending()
         # remove pending vehicles that couldn't be added
         node_edges = dict(self.network.node_mapping)[node]
         observation = []
-        infs = []
         for edge in range(len(node_edges)):
-            observation.append(state[edge][:-1])
-            infs.append(state[edge][-1]) # last bit is influence source
+            observation.append(state[edge][:-1]) # last bit is influence source
         observation.append(state[-1]) #  append traffic light info again
         observation = np.concatenate(observation)
-        infs = np.array(infs)
         self.dset = observation
-        if self.influence.aug_obs:
-            observation = np.append(observation, self.influence.get_hidden_state())
         if done:
             self.k.vehicle.kernel_api.simulation.clearPending()
-        return observation, reward, done, {'dset': self.dset, 'infs': infs}
+        return np.array([observation]), reward, [done], {}
     
     # override
     @property
@@ -163,6 +139,7 @@ class LocalTraffic(TrafficLightGridBitmapEnv):
     def load_influence_model(self):
         print('loaded')
         self.influence._load_model()
+        self.loaded = True
 
     def close(self):
         print('terminated')

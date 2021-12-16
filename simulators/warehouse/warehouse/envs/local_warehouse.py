@@ -33,7 +33,7 @@ class LocalWarehouse(GlobalWarehouse):
         self.influence = influence
         self.seed(seed)
 
-    def reset(self):
+    def reset(self, restart=False):
         """
         Resets the environment's state
         """

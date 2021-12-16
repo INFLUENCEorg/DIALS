@@ -29,7 +29,10 @@ class Network(nn.Module):
         else:
             self.linear1 = nn.Linear(input_size*seq_len, hidden_memory_size)
         self.output_size = output_size
-        self.softmax = nn.Softmax(dim=-1)
+        if output_size > 1:
+            self.softmax = nn.Softmax(dim=-1)
+        else:
+            self.softmax = nn.Sigmoid()
         self.hidden_memory_size = hidden_memory_size
         # self.linear2 = nn.Linear(hidden_memory_size, hidden_memory_size)
         self.linear3 = nn.Linear(hidden_memory_size, output_size*n_sources)
@@ -79,12 +82,13 @@ class InfluenceNetwork(object):
                              self.n_sources, self.output_size, self.recurrent,
                              self._seq_len, self.truncated)
         self.loss_function = nn.CrossEntropyLoss()
+        if self.output_size == 1:
+            self.loss_function = nn.BCEWithLogitsLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self._lr)
         self.scheduler = sch.StepLR(self.optimizer, step_size=100, gamma=0.1)
-        self.checkpoint_path = parameters['checkpoint_path'] + str(run_id)
+        self.checkpoint_path = parameters['checkpoint_path'] + str(agent_id)
         if parameters['load_model']:
             self._load_model()
-        print('TORCH NUM THREADS', torch.get_num_threads())
 
     def learn(self):
         inputs = self._read_data(self.inputs_file)
@@ -92,15 +96,15 @@ class InfluenceNetwork(object):
         input_seqs, target_seqs = self._form_sequences(inputs, targets)
         train_input_seqs, train_target_seqs, test_input_seqs, test_target_seqs = self._split_train_test(input_seqs, target_seqs)
         loss = self._train(train_input_seqs, train_target_seqs, test_input_seqs, test_target_seqs)
-        # self._save_model()
+        self.trained = True
+        self._save_model()
         os.remove(self.inputs_file)
         os.remove(self.targets_file)
-        return loss
+        return self.model
 
     def test(self, inputs_file, targets_file):
         inputs = self._read_data(inputs_file)
         targets = self._read_data(targets_file)
-        breakpoint()
         input_seqs, target_seqs = self._form_sequences(inputs, targets)
         loss = self._test(input_seqs, target_seqs)
         print(f'Test loss: {loss:10.8f}')
@@ -176,10 +180,10 @@ class InfluenceNetwork(object):
                 targets_batch = targets[indices]
                 self.model.hidden_cell = torch.zeros(1, self._batch_size, self._hidden_memory_size)
                 logits, probs = self.model(seqs_batch)
-                if targets_batch.shape[-1] == self.n_sources*self.output_size:
+                if self.output_size > 1:
                     targets_batch = torch.argmax(targets_batch.view(-1, self.n_sources, self.output_size), dim=2).long().flatten()
                 else:
-                    targets_batch = targets_batch.long().flatten()
+                    targets_batch = targets_batch.view(-1, 1)
                 logits = logits.flatten(end_dim=1)
                 loss = self.loss_function(logits, targets_batch)
                 self.optimizer.zero_grad()
@@ -196,11 +200,11 @@ class InfluenceNetwork(object):
         targets = torch.FloatTensor(targets)
         loss = 0
         self.model.hidden_cell = torch.zeros(1, len(inputs), self._hidden_memory_size)
-        logits, _ = self.model(inputs)
-        if targets.shape[-1] == self.n_sources*self.output_size:
+        logits, probs = self.model(inputs)
+        if self.output_size > 1:
             targets = torch.argmax(targets.view(-1, self.n_sources, self.output_size), dim=2).long().flatten()
         else:
-            targets = targets.long().flatten()
+            targets = targets.view(-1, 1)
         logits = logits.flatten(end_dim=1)
         loss = self.loss_function(logits, targets)
         return loss.item()
@@ -234,7 +238,7 @@ class InfluenceNetwork(object):
         checkpoint = torch.load(os.path.join(self.checkpoint_path, 'checkpoint'))
         self.model.load_state_dict(checkpoint['model_state_dict'])
         self.model.eval()
-        torch.set_grad_enabled(False)
+        # torch.set_grad_enabled(False)
         self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
 
 def read_parameters(config_file):

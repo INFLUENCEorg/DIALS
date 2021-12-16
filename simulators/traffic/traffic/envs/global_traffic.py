@@ -47,17 +47,7 @@ phases = [{'duration': '31', 'minDur': '8', 'maxDur': '45', 'state': 'GrGr'},
           {'duration': '6', 'minDur': '3', 'maxDur': '6', 'state': 'yryr'},
           {'duration': '31', 'minDur': '8', 'maxDur': '45', 'state': 'rGrG'},
           {'duration': '6', 'minDur': '3', 'maxDur': '6', 'state': 'ryry'}]
-nodes = []
-for node in range(N_ROWS*N_COLUMNS):
-    nodes.append('center'+str(node))
-nodes.pop(18)
-additional_env_params = {'target_velocity': 50,
-                         'switch_time': 3.0,
-                         'num_observed': 2,
-                         'discrete': True,
-                         'tl_type': 'actuated',
-                         'tl_controlled': ['center18'],
-                         'scale': 10}
+
 horizon = 300
 
 def gen_edges(col_num, row_num):
@@ -88,6 +78,7 @@ def get_inflow_params(col_num, row_num, additional_net_params):
             depart_speed=10)
 
     net = NetParams(
+        # osm_path='./osm_path',
         inflows=inflow,
         additional_params=additional_net_params)
 
@@ -99,7 +90,18 @@ class GlobalTraffic(TrafficLightGridBitmapEnv):
     OBS_SIZE = 40
     """
     """
-    def __init__(self, seed=None):
+    def __init__(self, seed, learning_agent_ids):
+        nodes = []
+        for node in range(N_ROWS*N_COLUMNS):
+            if node not in learning_agent_ids:
+                nodes.append('center'+str(node))
+        additional_env_params = {'target_velocity': 50,
+                                'switch_time': 3.0,
+                                'num_observed': 2,
+                                'discrete': True,
+                                'tl_type': 'actuated',
+                                'tl_controlled': ['center' + str(id) for id in learning_agent_ids],
+                                'scale': 10}
         tl_logic = TrafficLightParams()
         for node in nodes:
             tl_logic.add(node,
@@ -109,7 +111,7 @@ class GlobalTraffic(TrafficLightGridBitmapEnv):
                          maxGap = max_gap, 
                          detectorGap = detector_gap,
                          showDetectors = show_detectors)
-
+        
         additional_net_params = {'grid_array': grid_array,
                                  'speed_limit': speed_limit,
                                  'horizontal_lanes': horizontal_lanes, 
@@ -129,59 +131,57 @@ class GlobalTraffic(TrafficLightGridBitmapEnv):
         initial_config, net_params = get_inflow_params(col_num=N_COLUMNS,
                                                        row_num=N_ROWS,
                                                        additional_net_params=additional_net_params)
-        network = TrafficLightGridNetwork(name='grid',
+        network = TrafficLightGridNetwork(name='global',
                                           vehicles=vehicles,
                                           net_params=net_params,
                                           initial_config=initial_config,
                                           traffic_lights=tl_logic)
         
         env_params = EnvParams(horizon=horizon, additional_params=additional_env_params)
-        sim_params = SumoParams(render=False, restart_instance=False, sim_step=1, print_warnings=False, seed=seed)
-        # self.influence = influence
+        sim_params = SumoParams(render=True, restart_instance=False, sim_step=1, print_warnings=False, seed=seed)
         super().__init__(env_params, sim_params, network)
     
     # override
-    def reset(self):
-        # print(len(set(self.total_veh)))
-        # self.total_veh = []
-        state = super().reset()
-        node = self.tl_controlled[0]
-        node_edges = dict(self.network.node_mapping)[node]
-        observation = []
-        infs = []
-        for edge in range(len(node_edges)):
-            observation.append(state[edge][:-1])
-            infs.append(state[edge][-1]) # last bit is influence source
-        observation.append(state[-1]) #  append traffic light info
-        observation = np.concatenate(observation)
-        infs = np.array(infs, dtype='object')
-        dset = observation
-        # if self.influence.aug_obs:
-        #     self.influence.reset()
-        #     self.influence.predict()
-        #     observation = np.append(observation, self.influence.get_hidden_state())
-        reward = 0
-        done = False
-        return observation
+    def reset(self, restart=False):
+        if restart:
+            self.restart_simulation(self.sim_params)
+        states = super().reset()
+        observations = []
+        for i, node in enumerate(self.tl_controlled):
+            node_edges = dict(self.network.node_mapping)[node]
+            observation = []
+            state = states[i]
+            for edge in range(len(node_edges)):
+                observation.append(state[edge][:-1]) # last bit is influence source
+            observation.append(state[-1]) #  append traffic light info
+            observation = np.concatenate(observation)
+            observations.append([observation])
+        return np.array(observations)
 
     # override
     def step(self, rl_actions):
-        state, reward, done, _ = super().step(rl_actions)
-        node = self.tl_controlled[0]
-        node_edges = dict(self.network.node_mapping)[node]
-        observation = []
+        rl_actions = [action.item() for action in rl_actions]
+        rl_actions = int("".join(str(i) for i in rl_actions),2)
+        states, rewards, done, _ = super().step(rl_actions)
+        dones = [done]*len(self.tl_controlled)
+        observations = []
+        dsets = []
         infs = []
-        for edge in range(len(node_edges)):
-            observation.append(state[edge][:-1])
-            infs.append(state[edge][-1]) # last bit is influence source
-        observation.append(state[-1]) #  append traffic light info
-        observation = np.concatenate(observation)
-        infs = np.array(infs, dtype='object')
-        dset = observation
-        # if self.influence.aug_obs:
-        #     self.influence.predict(dset)
-        #     observation = np.append(observation, self.influence.get_hidden_state())
-        return observation, reward, done, {'dset': dset, 'infs': infs}
+        for i, node in enumerate(self.tl_controlled):
+            node_edges = dict(self.network.node_mapping)[node]
+            observation = []
+            inf = []
+            state = states[i]
+            for edge in range(len(node_edges)):
+                observation.append(state[edge][:-1])
+                inf.append(state[edge][-1]) # last bit is influence source
+            observation.append(state[-1]) #  append traffic light info
+            observation = np.concatenate(observation)
+            dset = observation
+            observations.append([observation])
+            dsets.append(dset)
+            infs.append(inf)
+        return np.array(observations), rewards, dones, {'dset': np.array(dsets), 'infs': np.array(infs)}
     
     # override
     @property

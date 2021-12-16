@@ -2,11 +2,12 @@ import time
 import numpy as np
 import multiprocessing as mp
 import multiprocessing.connection
-from torch.multiprocessing import Pool, Process, set_start_method
+from torch.multiprocessing import Pool, Process
+# from multiprocessing.pool import ThreadPool as Pool
 
-def train_single_agent(agent, env, training_steps=1.0e+5):
-  
-    obs = env.reset()
+def train_single_agent(agent_id, agent_dict, agent, env, training_steps=1.0e+5):
+    
+    obs = env.reset(restart=True)
     step = 0
     done = [True]
     while step <= training_steps:
@@ -32,11 +33,12 @@ def train_single_agent(agent, env, training_steps=1.0e+5):
 
         if agent.buffer.is_full:
             agent.update()
-    return agent
+    agent_dict[agent_id] = agent
+    
 
 def train_multi_agent(agents, env, training_steps=1.0e+3):
   
-    obs = env.reset()
+    obs = env.reset(restart=True)
     step = 0
     done = [True]*len(agents)
     while step <= training_steps:
@@ -81,17 +83,14 @@ def train_multi_agent(agents, env, training_steps=1.0e+3):
 
 class DistributedTraining(object):
     
-    def __init__(self, agents, envs):
+    def __init__(self, agents, sims):
         # self.local_trainers = [LocalTrainer(agent, env) for agent, env, in zip(agents, envs)]
         # self.pool =  Pool(processes=len(agents))
         self.agents = agents
-        self.envs = envs
-        # set_start_method('fork')
+        self.sims = sims
             
-
     def train(self, training_steps):
 
-        agents = []
         # for local_trainer in self.local_trainers:
         #     local_trainer.child.send(('train_agent', training_steps))
         #     agents.append(local_trainer.child.recv())
@@ -102,39 +101,41 @@ class DistributedTraining(object):
 
         # agents = [output.get() for output in outputs]
         # pool.close()
-        # processes = []
-        # for agent, env in zip(self.agents, self.envs):
-        #     p = Process(target=train_single_agent, args=(agent, env, training_steps))
-        #     p.start()
-        #     processes.append(p)
-        # for p in processes:
-        #     p.join()
-        with Pool() as pool:
-            self.agents = pool.starmap(train_single_agent, zip(self.agents, self.envs))
+        manager = multiprocessing.Manager()
+        agent_dict = manager.dict()
+        processes = []
+        for i in range(len(self.agents)):
+            p = Process(target=train_single_agent, args=(i, agent_dict, self.agents[i], self.sims[i], training_steps))
+            processes.append(p)
+            p.start()
+        for p in processes:
+            p.join()
+        # with Pool() as pool:
+            # agents = pool.starmap(train_single_agent, zip(agents, envs))
+        # with Pool() as pool:
+            # outputs = []
+        #     for agent, env in zip(agents, envs):
+        #         outputs.append(pool.apply_async(train_single_agent, (agent, env)))
+        #     agents = [output.get() for output in outputs]
+        # self.agents = agents
+        agent_dict = dict(sorted(agent_dict.items())) # agents might be returned in the wrong order
+        self.agents = list(agent_dict.values())
         return self.agents
 
     def train_influence(self):
 
-        # for local_trainer in self.local_trainers:
-        #     local_trainer.child.send(('train_influence', None))
-        # pool = Pool()#processes=len(self.agents))
         with Pool() as pool:
-            for env in self.envs:
-                pool.apply_async(env.influence.learn, ())
+            for sim in self.sims:
+                pool.apply_async(sim.influence.learn, ())
             pool.close()
             pool.join()
-        # processes = []
         # for env in self.envs:
-        #     p = Process(target=env.influence.learn)
-        #     p.start()
-        #     processes.append(p)
+            # loss = env.influence.learn()
+            # influence_models = [output.get() for output in outputs]
+        for i in range(len(self.sims)):
+            self.sims[i].load_influence_model()
 
-        # for p in processes:
-        #     p.join()
-        # with Pool() as pool:
-        #     for env in self.envs:
-        #         pool.apply_async(env.influence.learn, ())
-        # return self.agents
+        # return self.sims
 
     def close(self):
 
