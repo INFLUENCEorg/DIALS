@@ -167,7 +167,7 @@ class Experiment(object):
         else:
             train_steps = influence_train_freq
 
-        for step in range(0, total_steps+1, eval_freq):
+        for step in range(0, total_steps+1, train_steps):
 
             if self.parameters['simulator'] == 'local' and step % influence_train_freq == 0:
                 self.collect_data(self.dataset_size, self.data_path)
