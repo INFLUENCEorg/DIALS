@@ -160,6 +160,11 @@ class Experiment(object):
 
         total_steps = int(self.parameters['total_steps'])
         eval_freq = int(self.parameters['eval_freq'])
+        
+        if self.parameters['eval_freq'] < self.parameters['influence_train_freq']:
+            train_steps = self.parameters['eval_freq']
+        else:
+            train_steps = self.parameters['influence_train_freq']
 
         for step in range(0, total_steps+1, eval_freq):
 
@@ -172,12 +177,12 @@ class Experiment(object):
             end = time.time()
             print('Evaluate time:', end-start)
             start = time.time()
-            self.agents = self.trainer.train(self.parameters['eval_freq'])
+            self.agents = self.trainer.train(train_steps)
             
             end = time.time()
             print('Train time:', end-start)
 
-        self.trainer.close()
+        # self.trainer.close()
 
     def collect_data(self, dataset_size, data_path):
         """Collect data from global simulator"""
