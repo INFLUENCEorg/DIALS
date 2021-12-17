@@ -10,6 +10,7 @@ def train_single_agent(agent_id, agent_dict, agent, env, training_steps=1.0e+5):
     obs = env.reset(restart=True)
     step = 0
     done = [True]
+
     while step <= training_steps:
         
         rollout_step = 0
@@ -118,44 +119,50 @@ class DistributedTraining(object):
         #         outputs.append(pool.apply_async(train_single_agent, (agent, env)))
         #     agents = [output.get() for output in outputs]
         # self.agents = agents
-        agent_dict = dict(sorted(agent_dict.items())) # agents might be returned in the wrong order
+        agent_dict = dict(sorted(agent_dict.items())) # agents may be returned in the wrong order
         self.agents = list(agent_dict.values())
         return self.agents
 
     def train_influence(self):
-
+        outputs = []
+        for name, param in self.sims[0].influence.model.named_parameters():
+            if param.requires_grad:
+                print(name, param.data)
         with Pool() as pool:
             for sim in self.sims:
-                pool.apply_async(sim.influence.learn, ())
+                outputs.append(pool.apply_async(sim.influence.learn, ()))
             pool.close()
             pool.join()
+        # for i in range(len(self.sims)):
+            # self.sims[i].influence.model = influence_models[i]
         # for env in self.envs:
             # loss = env.influence.learn()
-            # influence_models = [output.get() for output in outputs]
-        for i in range(len(self.sims)):
-            self.sims[i].load_influence_model()
+        
+        # 
+        # for i in range(len(self.sims)):
+        #     self.sims[i].load_influence_model()
 
         # return self.sims
 
     def close(self):
 
-        for env in self.envs:
-            env.close()
+        for sim in self.sims:
+            sim.close()
     
 
 class GlobalTraining(object):
 
-    def __init__(self, agents, env):
+    def __init__(self, agents, sim):
 
         self.agents = agents
-        self.env = env
+        self.sim = sim
     
     def train(self, training_steps):
 
-        self.agents = train_multi_agent(self.agents, self.env, training_steps)
+        self.agents = train_multi_agent(self.agents, self.sim, training_steps)
         
         return self.agents
 
     def close(self):
 
-        self.env.close()
+        self.sim.close()
