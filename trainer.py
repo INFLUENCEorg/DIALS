@@ -125,9 +125,6 @@ class DistributedTraining(object):
 
     def train_influence(self):
         outputs = []
-        for name, param in self.sims[0].influence.model.named_parameters():
-            if param.requires_grad:
-                print(name, param.data)
         with Pool() as pool:
             for sim in self.sims:
                 outputs.append(pool.apply_async(sim.influence.learn, ()))

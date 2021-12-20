@@ -87,6 +87,7 @@ class InfluenceNetwork(object):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self._lr)
         self.scheduler = sch.StepLR(self.optimizer, step_size=100, gamma=0.1)
         self.checkpoint_path = parameters['checkpoint_path'] + str(agent_id)
+        self.agent_id = agent_id
         if parameters['load_model']:
             self._load_model()
 
@@ -100,7 +101,7 @@ class InfluenceNetwork(object):
         self._save_model()
         os.remove(self.inputs_file)
         os.remove(self.targets_file)
-        return self.model
+        return (self.agent_id, self.model)
 
     def test(self, inputs_file, targets_file):
         inputs = self._read_data(inputs_file)

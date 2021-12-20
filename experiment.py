@@ -179,7 +179,6 @@ class Experiment(object):
             print('Evaluate time:', end-start)
             start = time.time()
             self.agents = self.trainer.train(train_steps)
-            
             end = time.time()
             print('Train time:', end-start)
 
