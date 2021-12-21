@@ -21,20 +21,20 @@ parameters:
         beta: 0.01
         render: False
         policy: 'FNNPolicy'
-        learning_agent_ids: [6, 18] #7, 8, 11, 12, 13, 16, 17, 18]
+        learning_agent_ids: [6, 7, 8, 11, 12, 13, 16, 17, 18]
         hidden_size: 256
         hidden_size_2: 128
         influence_train_freq: 1.0e+6
 
     influence:
         # Common hyperparameters
-        seq_len: 300
+        seq_len: 1
         recurrent: True
         episode_length: 300
         data_path: './influence/data/traffic/'
         lr: 1.0e-4
-        num_epochs: 300
-        batch_size: 4
+        num_epochs: 500
+        batch_size: 1200
         hidden_memory_size: 64
         input_size: 40
         output_size: 1
