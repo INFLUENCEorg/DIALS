@@ -41,7 +41,7 @@ class Network(nn.Module):
         self.reset()
 
     def forward(self, input_seq):
-        input_seq = (input_seq - 0.5)/0.5
+        # input_seq = (input_seq - 0.5)/0.5
         if self.recurrent:
             out, self.hidden_cell = self.gru(input_seq, self.hidden_cell)
             if self.truncated:
