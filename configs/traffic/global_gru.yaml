@@ -21,7 +21,7 @@ parameters:
         beta: 0.01
         render: False
         policy: 'FNNPolicy'
-        learning_agent_ids: [6, 7, 8, 11, 12, 13, 16, 17, 18]
+        learning_agent_ids: [6, 7] #, 8, 11, 12, 13, 16, 17, 18]
         hidden_size: 256
         hidden_size_2: 128
         influence_train_freq: 5.0e+10
