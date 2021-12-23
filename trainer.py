@@ -107,9 +107,12 @@ class DistributedTraining(object):
         processes = []
         for i in range(len(self.agents)):
             p = Process(target=train_single_agent, args=(i, agent_dict, self.agents[i], self.sims[i], training_steps))
-            processes.append(p)
             p.start()
+            # p.join()
+        #     processes.append(p)
+        #     p.start()
         for p in processes:
+            p.close()
             p.join()
         # with Pool() as pool:
             # agents = pool.starmap(train_single_agent, zip(agents, envs))
