@@ -10,11 +10,7 @@ def train_single_agent(agent_id, agent_dict, agent, env, training_steps=1.0e+5):
     obs = env.reset(restart=True)
     step = 0
     done = [True]
-    if agent_id == 1:
-        print('BEFORE TRAINING AGENT INFLUENCE PARAMS')
-        for name, param in env.influence.model.named_parameters():
-            if param.requires_grad:
-                print(name, param.data)
+
     while step <= training_steps:
         
         rollout_step = 0
@@ -129,19 +125,12 @@ class DistributedTraining(object):
 
     def train_influence(self):
         outputs = []
-        print('BEFORE TRAINING INFLUENCE PARAMS')
-        for name, param in self.sims[1].influence.model.named_parameters():
-            if param.requires_grad:
-                print(name, param.data)
+
         with Pool() as pool:
             for sim in self.sims:
                 outputs.append(pool.apply_async(sim.influence.learn, ()))
             pool.close()
             pool.join()
-        print('AFTER TRAINING INFLUENCE PARAMS')
-        for name, param in self.sims[1].influence.model.named_parameters():
-            if param.requires_grad:
-                print(name, param.data)
         # for i in range(len(self.sims)):
             # self.sims[i].influence.model = influence_models[i]
         # for env in self.envs:
