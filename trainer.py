@@ -106,7 +106,8 @@ class DistributedTraining(object):
         agent_dict = manager.dict()
         processes = []
         for i in range(len(self.agents)):
-            p = Process(target=train_single_agent, args=(i, agent_dict, self.agents[i], self.sims[i], training_steps))
+            p = Process(target=train_single_agent, args=(i, agent_dict, self.agents[i], self.sims[i], training_steps)))
+            processes.append(p)
             p.start()
             # p.join()
         #     processes.append(p)
