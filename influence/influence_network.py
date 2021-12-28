@@ -79,9 +79,6 @@ class InfluenceNetwork(object):
         self.recurrent = parameters['recurrent']
         self.truncated = self._seq_len < self._episode_length
         self.agent_id = agent_id
-        self.reset_influence_model()
-    
-    def reset_influence_model(self):
         self.model = Network(self.input_size, self._hidden_memory_size,
                              self.n_sources, self.output_size, self.recurrent,
                              self._seq_len, self.truncated)
@@ -93,14 +90,18 @@ class InfluenceNetwork(object):
         # self.checkpoint_path = parameters['checkpoint_path'] + str(self.checkpoint_pathagent_id)
 
     def learn(self):
-        self.reset_influence_model()
+
+        for layer in self.model.children():
+            if hasattr(layer, 'reset_parameters'):
+                layer.reset_parameters()
+        print('learn')
         inputs = self._read_data(self.inputs_file)
         targets = self._read_data(self.targets_file)
         input_seqs, target_seqs = self._form_sequences(inputs, targets)
         train_input_seqs, train_target_seqs, test_input_seqs, test_target_seqs = self._split_train_test(input_seqs, target_seqs)
         loss = self._train(train_input_seqs, train_target_seqs, test_input_seqs, test_target_seqs)
         self.trained = True
-        self._save_model()
+        # self._save_model()
         os.remove(self.inputs_file)
         os.remove(self.targets_file)
         return (self.agent_id, self.model)
