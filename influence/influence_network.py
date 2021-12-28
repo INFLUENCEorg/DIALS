@@ -79,8 +79,9 @@ class InfluenceNetwork(object):
         self.recurrent = parameters['recurrent']
         self.truncated = self._seq_len < self._episode_length
         self.agent_id = agent_id
+        self.reset_influence_model()
     
-    def reset(self):
+    def reset_influence_model(self):
         self.model = Network(self.input_size, self._hidden_memory_size,
                              self.n_sources, self.output_size, self.recurrent,
                              self._seq_len, self.truncated)
@@ -89,13 +90,10 @@ class InfluenceNetwork(object):
             self.loss_function = nn.BCEWithLogitsLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self._lr)
         # self.scheduler = sch.StepLR(self.optimizer, step_size=100, gamma=0.1)
-        self.checkpoint_path = parameters['checkpoint_path'] + str(self.checkpoint_pathagent_id)
-        
-        if parameters['load_model']:
-            self._load_model()
+        # self.checkpoint_path = parameters['checkpoint_path'] + str(self.checkpoint_pathagent_id)
 
     def learn(self):
-        self.reset()
+        self.reset_influence_model()
         inputs = self._read_data(self.inputs_file)
         targets = self._read_data(self.targets_file)
         input_seqs, target_seqs = self._form_sequences(inputs, targets)
