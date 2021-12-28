@@ -111,7 +111,7 @@ class LocalTraffic(TrafficLightGridBitmapEnv):
             if sample < probs[i]:
                 speed = 9.5
                 if len(self.k.vehicle.get_ids_by_edge(edge)) > 8:
-                    speed = 2
+                    speed = 3
                 self.k.vehicle.add(veh_id='idm_' + str(self.veh_id), type_id='idm',
                                    edge=edge, lane='allowed', pos=6, speed=speed)
                 self.veh_id += 1
