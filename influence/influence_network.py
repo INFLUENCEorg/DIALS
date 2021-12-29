@@ -91,10 +91,9 @@ class InfluenceNetwork(object):
 
     def learn(self):
 
-        for layer in self.model.children():
-            if hasattr(layer, 'reset_parameters'):
-                layer.reset_parameters()
-        print('learn')
+        # for layer in self.model.children():
+        #     if hasattr(layer, 'reset_parameters'):
+        #         layer.reset_parameters()
         inputs = self._read_data(self.inputs_file)
         targets = self._read_data(self.targets_file)
         input_seqs, target_seqs = self._form_sequences(inputs, targets)
