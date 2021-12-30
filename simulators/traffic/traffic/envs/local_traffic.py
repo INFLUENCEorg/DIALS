@@ -95,9 +95,9 @@ class LocalTraffic(TrafficLightGridBitmapEnv):
         observation = []
         for edge in range(len(node_edges)):
             observation.append(state[edge][:-1])
+        self.dset = np.concatenate(observation) # traffic light info not in dset
         observation.append(state[-1]) #  append traffic light info
         observation = np.concatenate(observation)
-        self.dset = observation
         return np.array([observation])
 
     # override
@@ -124,9 +124,9 @@ class LocalTraffic(TrafficLightGridBitmapEnv):
         observation = []
         for edge in range(len(node_edges)):
             observation.append(state[edge][:-1]) # last bit is influence source
+        self.dset = np.concatenate(observation) # traffic light info not in dset
         observation.append(state[-1]) #  append traffic light info again
         observation = np.concatenate(observation)
-        self.dset = observation
         if done:
             self.k.vehicle.kernel_api.simulation.clearPending()
         return np.array([observation]), reward, [done], {}

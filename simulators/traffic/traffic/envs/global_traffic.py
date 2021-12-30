@@ -175,9 +175,9 @@ class GlobalTraffic(TrafficLightGridBitmapEnv):
             for edge in range(len(node_edges)):
                 observation.append(state[edge][:-1])
                 inf.append(state[edge][-1]) # last bit is influence source
+            dset = np.concatenate(observation) # traffic light info not in dset
             observation.append(state[-1]) #  append traffic light info
             observation = np.concatenate(observation)
-            dset = observation
             observations.append([observation])
             dsets.append(dset)
             infs.append(inf)
