@@ -1,7 +1,7 @@
 parameters:
     main:
         # Common hyperparameters
-        simulator: 'local'
+        simulator: 'distributed'
         env: 'traffic'
         obs_size: 40
         rollout_steps: 64
@@ -27,7 +27,7 @@ parameters:
         # learning_agent_ids: [48, 1]
         hidden_size: 256
         hidden_size_2: 128
-        influence_train_freq: 1.0e+4
+        influence_train_freq: 1.0e+5
 
     influence:
         # Common hyperparameters

@@ -126,7 +126,7 @@ class Experiment(object):
             learning_agent_ids=self.parameters['learning_agent_ids']
             )
 
-        if self.parameters['simulator'] == 'local':
+        if self.parameters['simulator'] == 'distributed':
             
             self.data_path = parameters['influence']['data_path'] + str(_run._id) + '/'
             self.dataset_size = parameters['influence']['dataset_size']
@@ -175,7 +175,7 @@ class Experiment(object):
             start = time.time()
             if step % eval_freq == 0:
                 for idx, agent in enumerate(self.agents):
-                    save_path = os.path.join('saved_policies', str(self._seed), str(self.parameters['learning_agent_ids'][idx]))
+                    save_path = os.path.join('saved_policies', str(self.parameters['env']), str(self.parameters['simulator']), str(self.parameters['learning_agent_ids'][idx]))
                     agent.save_policy(save_path)
                 self.evaluate(step)
                 
