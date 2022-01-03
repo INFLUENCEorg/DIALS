@@ -169,7 +169,7 @@ class Experiment(object):
 
         for step in range(0, total_steps+1, train_steps):
 
-            if self.parameters['simulator'] == 'local' and step % influence_train_freq == 0:
+            if self.parameters['simulator'] == 'distributed' and step % influence_train_freq == 0:
                 self.collect_data(self.dataset_size, self.data_path)
                 self.trainer.train_influence()
             start = time.time()
