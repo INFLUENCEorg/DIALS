@@ -28,4 +28,3 @@ parameters:
         hidden_size: 256
         hidden_size_2: 128
         influence_train_freq: 5.0e+10
-        eval_freq: 1000
