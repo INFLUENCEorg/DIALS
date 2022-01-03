@@ -171,10 +171,14 @@ class Experiment(object):
 
             if self.parameters['simulator'] == 'local' and step % influence_train_freq == 0:
                 self.collect_data(self.dataset_size, self.data_path)
-                self.local_simulators = self.trainer.train_influence()
+                self.trainer.train_influence()
             start = time.time()
             if step % eval_freq == 0:
+                for idx, agent in enumerate(self.agents):
+                    save_path = os.path.join('saved_policies', str(self._seed), str(self.parameters['learning_agent_ids'][idx]))
+                    agent.save_policy(save_path)
                 self.evaluate(step)
+                
             end = time.time()
             print('Evaluate time:', end-start)
             start = time.time()
