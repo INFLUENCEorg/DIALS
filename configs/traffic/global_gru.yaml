@@ -4,7 +4,7 @@ parameters:
         simulator: 'global'
         env: 'traffic'
         obs_size: 40
-        rollout_steps: 64
+        rollout_steps: 10
         num_actions: 2
         name: 'traffic'
         influence_model: 'nn'
@@ -28,3 +28,4 @@ parameters:
         hidden_size: 256
         hidden_size_2: 128
         influence_train_freq: 5.0e+10
+        memory_size: 100
