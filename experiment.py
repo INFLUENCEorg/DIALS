@@ -5,7 +5,7 @@ from influence.influence_network import InfluenceNetwork
 from influence.influence_uniform import InfluenceUniform
 # from simulators.vec_env import VecEnv
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecNormalize, VecFrameStack, DummyVecEnv
-from recurrent_policies.PPO import Agent, FNNPolicy, GRUPolicy, ModifiedGRUPolicy, IAMGRUPolicy, FNNFSPolicy, LSTMPolicy, IAMLSTMPolicy, agent
+from recurrent_policies.PPO import Agent, FNNPolicy, GRUPolicy, IAMGRUPolicy
 import gym
 import sacred
 from sacred.observers import MongoObserver
@@ -104,7 +104,8 @@ class Experiment(object):
                 1)
         
         self.agents = []
-        for _ in self.parameters['learning_agent_ids']:
+        for agent_id in self.parameters['learning_agent_ids']:
+            save_path =  os.path.join('saved_policies', str(self.parameters['env']), str(self.parameters['simulator']), str(agent_id))
             self.agents.append(
                 Agent(
                     policy=policy,
@@ -116,7 +117,9 @@ class Experiment(object):
                     total_steps=self.parameters['total_steps'],
                     clip_range=self.parameters['epsilon'],
                     entropy_coef=self.parameters['beta'],
-                    load=self.parameters['load_policy']
+                    load=self.parameters['load_policy'],
+                    save_path=save_path,
+                    rollout_steps=self.parameters['rollout_steps']
                     )
                 )
 
@@ -128,7 +131,7 @@ class Experiment(object):
 
         if self.parameters['simulator'] == 'distributed':
             
-            self.data_path = parameters['influence']['data_path'] + str(_run._id) + '/'
+            self.data_path = os.path.join(parameters['influence']['data_path'], str(_run._id))
             self.dataset_size = parameters['influence']['dataset_size']
 
             self.local_simulators = []
@@ -174,9 +177,8 @@ class Experiment(object):
                 self.trainer.train_influence()
             start = time.time()
             if step % eval_freq == 0:
-                for idx, agent in enumerate(self.agents):
-                    save_path = os.path.join('saved_policies', str(self.parameters['env']), str(self.parameters['simulator']), str(self.parameters['learning_agent_ids'][idx]))
-                    agent.save_policy(save_path)
+                for agent in self.agents:
+                    agent.save_policy()
                 self.evaluate(step)
                 
             end = time.time()

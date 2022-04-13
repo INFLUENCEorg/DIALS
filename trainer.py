@@ -137,8 +137,8 @@ class DistributedTraining(object):
             pool.join()
         # for i in range(len(self.sims)):
             # self.sims[i].influence.model = influence_models[i]
-        # for env in self.envs:
-            # loss = env.influence.learn()
+        # for env in self.sims:
+        #     loss = env.influence.learn()
         
         # 
         # for i in range(len(self.sims)):
