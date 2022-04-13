@@ -163,18 +163,20 @@ class Experiment(object):
 
         total_steps = int(self.parameters['total_steps'])
         eval_freq = int(self.parameters['eval_freq'])
-        influence_train_freq = int(self.parameters['influence_train_freq'])
-
-        if eval_freq < influence_train_freq:
-            train_steps = eval_freq
-        else:
-            train_steps = influence_train_freq
-
+        
+        
+        train_steps = eval_freq
+        if self.parameters['simulator'] == 'distributed':
+            influence_train_freq = int(self.parameters['influence_train_freq'])
+            if eval_freq >= influence_train_freq:
+                train_steps = influence_train_freq
+        
         for step in range(0, total_steps+1, train_steps):
 
-            if self.parameters['simulator'] == 'distributed' and step % influence_train_freq == 0:
-                self.collect_data(self.dataset_size, self.data_path)
-                self.trainer.train_influence()
+            if self.parameters['simulator'] == 'distributed':
+                if step % influence_train_freq == 0:
+                    self.collect_data(self.dataset_size, self.data_path)
+                    self.trainer.train_influence()
             start = time.time()
             if step % eval_freq == 0:
                 for agent in self.agents:
