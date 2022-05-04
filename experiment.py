@@ -170,7 +170,7 @@ class Experiment(object):
             influence_train_freq = int(self.parameters['influence_train_freq'])
             if eval_freq >= influence_train_freq:
                 train_steps = influence_train_freq
-        
+
         for step in range(0, total_steps+1, train_steps):
 
             if self.parameters['simulator'] == 'distributed':
