@@ -98,12 +98,12 @@ class InfluenceNetwork(object):
         targets = self._read_data(self.targets_file)
         input_seqs, target_seqs = self._form_sequences(inputs, targets)
         train_input_seqs, train_target_seqs, test_input_seqs, test_target_seqs = self._split_train_test(input_seqs, target_seqs)
-        loss = self._train(train_input_seqs, train_target_seqs, test_input_seqs, test_target_seqs)
+        initial_loss, final_loss = self._train(train_input_seqs, train_target_seqs, test_input_seqs, test_target_seqs)
         self.trained = True
         # self._save_model()
         os.remove(self.inputs_file)
         os.remove(self.targets_file)
-        return (self.agent_id, self.model)
+        return (initial_loss, final_loss)
 
     def test(self, inputs_file, targets_file):
         inputs = self._read_data(inputs_file)
@@ -175,6 +175,8 @@ class InfluenceNetwork(object):
             permutation = torch.randperm(len(seqs))
             if e % 50 == 0:
                 test_loss = self._test(test_inputs, test_targets)
+                if e == 0:
+                    initial_loss = test_loss
                 print(f'epoch: {e:3} test loss: {test_loss:10.8f}')
                 # print('lr: {1}'.format(e, self.optimizer.param_groups[0]['lr']))
             for i in range(0, len(seqs) - len(seqs) % self._batch_size, self._batch_size):
@@ -193,10 +195,10 @@ class InfluenceNetwork(object):
                 loss.backward()
                 self.optimizer.step()
             # self.scheduler.step()
-        test_loss = self._test(test_inputs, test_targets)
-        print(f'epoch: {e+1:3} test loss: {test_loss:10.8f}')
+        final_loss = self._test(test_inputs, test_targets)
+        print(f'epoch: {e+1:3} test loss: {final_loss:10.8f}')
         self.model.reset()
-        return test_loss
+        return initial_loss, final_loss
 
     def _test(self, inputs, targets):
         inputs = torch.FloatTensor(inputs)

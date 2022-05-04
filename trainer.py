@@ -135,6 +135,12 @@ class DistributedTraining(object):
                 outputs.append(pool.apply_async(sim.influence.learn, ()))
             pool.close()
             pool.join()
+        initial_loss_mean = 0
+        final_loss_mean = 0
+        for output in outputs:
+            initial_loss, final_loss = output.get()
+            initial_loss_mean += initial_loss/len(outputs)
+            final_loss_mean += final_loss/len(outputs)
         # for i in range(len(self.sims)):
             # self.sims[i].influence.model = influence_models[i]
         # for env in self.sims:
@@ -144,7 +150,7 @@ class DistributedTraining(object):
         # for i in range(len(self.sims)):
         #     self.sims[i].load_influence_model()
 
-        # return self.sims
+        return initial_loss_mean, final_loss_mean
 
     def close(self):
 
