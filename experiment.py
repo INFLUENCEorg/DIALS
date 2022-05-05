@@ -173,7 +173,7 @@ class Experiment(object):
 
         for step in range(0, total_steps+1, train_steps):
 
-            if self.parameters['simulator'] == 'distributed':
+            if self.parameters['simulator'] == 'distributed' and not self.parameters['untrained_influence']:
                 if step % influence_train_freq == 0:
                     start = time.time()
                     self.collect_data(self.dataset_size, self.data_path)
