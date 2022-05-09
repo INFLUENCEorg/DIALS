@@ -247,6 +247,9 @@ class Experiment(object):
                     action, _, _ = agent.choose_action(obs[i])
                     actions.append(action)
                 obs, reward, done, info = self.global_simulator.step(actions)
+                if self.parameters['render']:
+                    self.global_simulator.render()
+                    time.sleep(.5)
                 reward_sum += np.array(reward)
             obs = self.global_simulator.reset()
             episode_rewards.append(reward_sum)

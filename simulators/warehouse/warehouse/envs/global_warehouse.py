@@ -96,8 +96,8 @@ class GlobalWarehouse(gym.Env):
         Renders the environment
         """
         bitmap = self._get_state()
-        position = self.robots[self.learning_robot_id].get_position
-        bitmap[position[0], position[1], 1] += 1
+        # position = self.robots[self.learning_robot_id].get_position
+        # bitmap[position[0], position[1], 1] += 1
         im = bitmap[:, :, 0] - 2*bitmap[:, :, 1]
 
         if self.img is None:
@@ -107,14 +107,14 @@ class GlobalWarehouse(gym.Env):
                 domain = robot.get_domain
                 y = domain[0]
                 x = domain[1]
-                if robot_id == self.learning_robot_id:
-                    color = 'r'
-                    linestyle='-'
-                    linewidth=2
-                else:
-                    color = 'k'
-                    linestyle=':'
-                    linewidth=1
+                # if robot_id == self.learning_robot_id:
+                #     color = 'r'
+                #     linestyle='-'
+                #     linewidth=2
+                # else:
+                color = 'k'
+                linestyle=':'
+                linewidth=1
                 rect = patches.Rectangle((x-0.5, y-0.5), self.robot_domain_size[0],
                                          self.robot_domain_size[1], linewidth=linewidth,
                                          edgecolor=color, linestyle=linestyle,

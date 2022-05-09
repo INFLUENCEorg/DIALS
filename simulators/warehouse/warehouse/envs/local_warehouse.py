@@ -14,7 +14,7 @@ class LocalWarehouse(GlobalWarehouse):
                2: 'LEFT',
                3: 'RIGHT'}
 
-    def __init__(self, influence, seed):
+    def __init__(self, influence, seed, agent_id):
         self.parameters = read_parameters('local_warehouse.yaml')
         # parameters = parse_arguments()
         self.n_columns = self.parameters['n_columns']
