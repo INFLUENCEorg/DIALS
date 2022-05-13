@@ -93,7 +93,7 @@ class InfluenceNetwork(object):
         self.model = Network(self.input_size, self._hidden_memory_size,
                              self.n_sources, self.output_size, self.recurrent,
                              self._seq_len, self.truncated)
-        self.model.apply(init_weights)
+        # self.model.apply(init_weights)
         self.loss_function = nn.CrossEntropyLoss()
         if self.output_size == 1:
             self.loss_function = nn.BCEWithLogitsLoss()
