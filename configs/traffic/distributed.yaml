@@ -29,7 +29,6 @@ parameters:
         hidden_size_2: 128
         influence_train_freq: 1.0e+5
         untrained_influence: False
-        load_policy: True
 
     influence:
         # Common hyperparameters
