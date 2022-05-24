@@ -1,8 +1,8 @@
 warehouse:
-  n_rows: 17 # n_robots_row*(domain_size-1) + 1
-  n_columns: 17 # n_robots_column*(domain_size-1) + 1
-  n_robots_row: 4
-  n_robots_column: 4
+  n_rows: 37 # n_robots_row*(domain_size-1) + 1
+  n_columns: 37 # n_robots_column*(domain_size-1) + 1
+  n_robots_row: 9
+  n_robots_column: 9
   distance_between_shelves: 4
   robot_domain_size: [5, 5]
   prob_item_appears: 0.02
