@@ -16,6 +16,8 @@ From: python:3.8
     make -j$(nproc)
     cd /
     git clone https://github.com/INFLUENCEorg/flow.git
+    pip install -e ./flow
+    pip install stable-baselines3
     pip install numpy
     pip install matplotlib
     pip install pyaml
@@ -25,14 +27,11 @@ From: python:3.8
     pip install networkx
     pip install lxml
     pip install pyglet
-    pip install opencv-python
     pip install imutils
     pip install scipy
     pip install torch==1.8.1
-    pip install stable-baselines3
     pip install pathos
     pip install psutil
-    pip install -e ./flow
     pip install -e ./simulators/warehouse/
     pip install -e simulators/traffic/
     chmod -R 777 /usr/local/lib/python3.8/site-packages
