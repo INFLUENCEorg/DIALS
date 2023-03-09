@@ -20,6 +20,7 @@ scipy = "*"
 torch = "==1.8.1"
 stable-baselines3 = "*"
 pathos = "*"
+psutil = "*"
 
 [dev-packages]
 ipykernel = "*"
