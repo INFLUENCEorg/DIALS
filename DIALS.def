@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: python:3.8
+From: python:3.6
 
 %files
     Pipfile
@@ -34,7 +34,7 @@ From: python:3.8
     pip install psutil
     pip install -e ./simulators/warehouse/
     pip install -e simulators/traffic/
-    chmod -R 777 /usr/local/lib/python3.8/site-packages
+    chmod -R 777 /usr/local/lib/python3.6/site-packages
     
 %environment    
     export SUMO_HOME="/sumo"
