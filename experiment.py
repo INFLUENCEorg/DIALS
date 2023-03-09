@@ -16,7 +16,8 @@ import csv
 import os
 import time
 from copy import deepcopy
-from trainer import DistributedTraining, GlobalTraining
+from trainer import DistributedTraining, GlobalTraining, train_multi_agent
+import psutil
 # from sacred.settings import SETTINGS
 # SETTINGS.CAPTURE_MODE = 'sys'
 
@@ -129,6 +130,8 @@ class Experiment(object):
             learning_agent_ids=self.parameters['learning_agent_ids']
             )
 
+        print('RAM: ', psutil.Process().memory_info().rss / (1024 * 1024))
+
         if self.parameters['simulator'] == 'distributed':
             
             self.data_path = os.path.join(parameters['influence']['data_path'], str(_run._id))
@@ -158,6 +161,9 @@ class Experiment(object):
         else:
             
             self.trainer = GlobalTraining(self.agents, self.global_simulator)
+        
+        arr = np.zeros((1024, 1024, 1024, 3), dtype=np.uint8)
+        print('RAM: ', psutil.Process().memory_info().rss / (1024 * 1024))
            
     def run(self):
 
@@ -187,7 +193,9 @@ class Experiment(object):
                 for agent in self.agents:
                     agent.save_policy()
                 self.evaluate(step)
-                
+            print('TRAIN')
+            print(psutil.Process().memory_info().rss / (1024 * 1024))
+
             end = time.time()
             print('Evaluate time:', end-start)
             start = time.time()
@@ -253,6 +261,9 @@ class Experiment(object):
                 reward_sum += np.array(reward)
             obs = self.global_simulator.reset()
             episode_rewards.append(reward_sum)
+            
+            print(psutil.Process().memory_info().rss / (1024 * 1024))
+
         self._run.log_scalar('mean episodic return', np.mean(episode_rewards), step)
         print(np.mean(episode_rewards))
         print('Done!')
