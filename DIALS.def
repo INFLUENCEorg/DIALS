@@ -16,6 +16,7 @@ From: python:3.6
     make -j$(nproc)
     cd /
     git clone https://github.com/INFLUENCEorg/flow.git
+    git clone https://github.com/miguelsuau/recurrent_policies.git
     pip install -e ./flow
     pip install stable-baselines3
     pip install numpy

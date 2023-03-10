@@ -1,6 +1,6 @@
-# IALS
+# DIALS
 
-Source code for the paper [Influence-Augmented Local Simulators: a Scalable Solution for Fast Deep RL in Large Networked Systems](https://proceedings.mlr.press/v162/suau22a.html):
+Source code for the paper [Distributed Influence-Augmented Local Simulators for Parallel MARL in Large Networked Systems](https://openreview.net/forum?id=lKFOwaYNQlb):
 
 ## Requirements
 [Singularity](https://sylabs.io/docs/)
@@ -8,14 +8,14 @@ Source code for the paper [Influence-Augmented Local Simulators: a Scalable Solu
 ## Installation
 ```console 
 git clone git@github.com:miguelsuau/recurrent_policies.git
-sudo singularity build IALS.sif IALS.def
+sudo singularity build DIALS.sif DIALS.def
 ```
 
 ## Running an experiment
 To run a new experiment do:
 
 ```console
-cd runners
-singularity run python experimentor.py with ./configs/warehouse/local_fnn_framestack.yaml
+singularity shell --writable-tmpfs DIALS.sif
+python experiment.py with ./configs/warehouse/DIALS.yaml
 ```
-This will train a new policy on the local simulator. To train on the global simulator change the config file path to `./configs/warehouse/global_fnn_framestack.yaml`.
+This will train a new policy for the warehouse environment on DIALS. To train on the global simulator change the config file path to `./configs/warehouse/global.yaml`.
