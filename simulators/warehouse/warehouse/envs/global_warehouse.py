@@ -63,7 +63,7 @@ class GlobalWarehouse(gym.Env):
         for robot in self.robots:
             state = self._get_state()
             obs = robot.observe(state, self.obs_type)
-            actions.append(robot.select_naive_action(obs, self.items))
+            actions.append(robot.select_naive_action(obs))#, self.items))
         # for i, robot_id in enumerate(self.learning_robot_ids):
         #     actions[robot_id] = action[i]
         self._robots_act(actions)
