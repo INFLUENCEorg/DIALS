@@ -10,10 +10,10 @@ Source code for the paper [Distributed Influence-Augmented Local Simulators for 
 git clone git@github.com:miguelsuau/recurrent_policies.git
 sudo singularity build DIALS.sif DIALS.def
 ```
-This will create a singularity container and install all the required packages. Alternatively, you can create a virtual environment install the packages listed in DIALS.def.
+This will create a singularity container and install all the required packages. Alternatively, you can create a virtual environment install the packages listed in DIALS.def
 
 ## Running an experiment
-Launch the singularity shelL:
+Launch the singularity shell:
 ```console
 singularity shell --writable-tmpfs DIALS.sif
 ```
