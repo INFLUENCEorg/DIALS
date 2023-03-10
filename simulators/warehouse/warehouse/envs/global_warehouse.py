@@ -4,12 +4,9 @@ from warehouse.envs.utils import *
 import numpy as np
 import gym
 from gym import spaces
-import time
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import networkx as nx
-import csv
-from PIL import Image
 
 class GlobalWarehouse(gym.Env):
     """
@@ -66,9 +63,9 @@ class GlobalWarehouse(gym.Env):
         for robot in self.robots:
             state = self._get_state()
             obs = robot.observe(state, self.obs_type)
-            actions.append(robot.select_naive_action2(obs, self.items))
-        for i, robot_id in enumerate(self.learning_robot_ids):
-            actions[robot_id] = action[i]
+            actions.append(robot.select_naive_action(obs, self.items))
+        # for i, robot_id in enumerate(self.learning_robot_ids):
+        #     actions[robot_id] = action[i]
         self._robots_act(actions)
         infs = self.get_infs
         reward = self._compute_reward()
