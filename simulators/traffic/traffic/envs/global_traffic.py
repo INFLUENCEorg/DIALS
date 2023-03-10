@@ -94,8 +94,8 @@ class GlobalTraffic(TrafficLightGridBitmapEnv):
         nodes = []
         for node in range(N_ROWS*N_COLUMNS):
             # FOR TESTING THE ACTUATED TL CONTROLLERS COMMENT THE LINE BELOW
-            if node not in learning_agent_ids:
-                nodes.append('center'+str(node))
+            # if node not in learning_agent_ids:
+            nodes.append('center'+str(node))
         additional_env_params = {'target_velocity': 50,
                                 'switch_time': 3.0,
                                 'num_observed': 2,
@@ -164,9 +164,9 @@ class GlobalTraffic(TrafficLightGridBitmapEnv):
         
         rl_actions = [action.item() for action in rl_actions]
         rl_actions = int("".join(str(i) for i in rl_actions),2)
-        states, rewards, done, _ = super().step(rl_actions)
+        # states, rewards, done, _ = super().step(rl_actions)
         # FOR TESTING THE ACTUATED TL CONTROLLERS COMMENT THE LINE ABOVE AND UNCOMMENT THE LINE BELOW
-        # states, rewards, done, _ = super().step(None)
+        states, rewards, done, _ = super().step(None)
         dones = [done]*len(self.tl_controlled)
     
         observations = []
