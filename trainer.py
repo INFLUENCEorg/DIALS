@@ -114,7 +114,7 @@ class DistributedTraining(object):
         #     p.start()
         for p in processes:
             p.join()
-            p.close()
+            # p.close()
         # with Pool() as pool:
             # agents = pool.starmap(train_single_agent, zip(agents, envs))
         # with Pool() as pool:
