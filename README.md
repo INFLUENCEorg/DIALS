@@ -1,6 +1,6 @@
 # DIALS
 
-Source code for the paper [Distributed Influence-Augmented Local Simulators for Parallel MARL in Large Networked Systems](https://openreview.net/forum?id=lKFOwaYNQlb) by Miguel Suau, Jinke He, Matthijs Spaan, and Frans Oliehoek
+Source code for the paper [Distributed Influence-Augmented Local Simulators for Parallel MARL in Large Networked Systems](https://openreview.net/forum?id=lKFOwaYNQlb) by Miguel Suau, Jinke He, Mustafa Mert Çelikok, Matthijs Spaan, and Frans Oliehoek
 
 ## Requirements
 [Singularity](https://sylabs.io/docs/)
