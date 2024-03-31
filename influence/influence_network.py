@@ -185,7 +185,7 @@ class InfluenceNetwork(object):
         targets = torch.FloatTensor(train_targets)
         for e in range(self.num_epochs):
             permutation = torch.randperm(len(seqs))
-            if e % 50 == 0:
+            if e % 1 == 0:
                 test_loss = self._test(test_inputs, test_targets)
                 if e == 0:
                     initial_loss = test_loss

@@ -2,8 +2,6 @@ Bootstrap: docker
 From: python:3.6
 
 %files
-    Pipfile
-    Pipfile.lock
     simulators
 
 %post

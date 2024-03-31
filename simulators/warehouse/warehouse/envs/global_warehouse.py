@@ -64,8 +64,8 @@ class GlobalWarehouse(gym.Env):
             state = self._get_state()
             obs = robot.observe(state, self.obs_type)
             actions.append(robot.select_naive_action(obs))#, self.items))
-        # for i, robot_id in enumerate(self.learning_robot_ids):
-        #     actions[robot_id] = action[i]
+        for i, robot_id in enumerate(self.learning_robot_ids):
+            actions[robot_id] = action[i]
         self._robots_act(actions)
         infs = self.get_infs
         reward = self._compute_reward()
@@ -122,8 +122,8 @@ class GlobalWarehouse(gym.Env):
 
         else:
             self.img.set_data(im)
-        plt.savefig('images/image.jpg')
-        img = plt.imread('images/image.jpg')
+        plt.savefig('images/image.png')
+        img = plt.imread('images/image.png')
         return img
 
 
